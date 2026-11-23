@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Business Health Scorecard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;600;700&display=swap">
+<style>
+/* Layout: one narrow column — header band, 8 axis cards with 3 questions each, sticky result panel on wide screens */
+:root{
+  --bg:#f4f7f9; --surface:#ffffff; --ink:#0f2440; --muted:#5a6b7f; --line:#dde5ec;
+  --navy:#12294a; --teal:#0e8f8a; --teal-soft:#e2f3f2;
+  --good:#1f8a4c; --warn:#b7791f; --bad:#c0392b;
+  --display:"Readex Pro","IBM Plex Sans Arabic",system-ui,sans-serif;
+  --body:"IBM Plex Sans Arabic",system-ui,"Segoe UI",Tahoma,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1626; --surface:#122238; --ink:#e7eef6; --muted:#9db0c4; --line:#22364f;
+  --navy:#cfe0f3; --teal:#35c2bb; --teal-soft:#123a3c; --good:#4cc283; --warn:#e0a84a; --bad:#ef7564; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1626; --surface:#122238; --ink:#e7eef6; --muted:#9db0c4; --line:#22364f;
+  --navy:#cfe0f3; --teal:#35c2bb; --teal-soft:#123a3c; --good:#4cc283; --warn:#e0a84a; --bad:#ef7564; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.7;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:28px;align-items:start}
+@media (max-width:880px){.wrap{grid-template-columns:minmax(0,1fr)}}
+.draft{grid-column:1/-1;font-size:13px;color:var(--warn);border:1px dashed var(--warn);border-radius:8px;padding:8px 12px}
+header{grid-column:1/-1;display:flex;flex-direction:column;gap:6px}
+.brand{font-family:var(--display);font-weight:600;letter-spacing:.04em;color:var(--teal);font-size:13px}
+h1{font-family:var(--display);font-size:clamp(26px,4vw,38px);line-height:1.3;margin:0;color:var(--navy);text-wrap:balance}
+.lede{color:var(--muted);max-width:62ch;margin:0}
+.scale{display:flex;flex-wrap:wrap;gap:8px;font-size:13px;color:var(--muted)}
+.scale span{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 10px}
+main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.axis{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.axis-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.axis h2{font-family:var(--display);font-size:18px;margin:0;color:var(--navy)}
+.axis-phase{font-size:12px;color:var(--teal);font-weight:600}
+.axis-score{font-family:var(--display);font-variant-numeric:tabular-nums;font-size:15px;color:var(--muted)}
+.q{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 16px;align-items:center;padding-top:10px;border-top:1px solid var(--line)}
+.q p{margin:0}
+@media (max-width:560px){.q{grid-template-columns:minmax(0,1fr)}}
+.opts{display:flex;gap:6px}
+.opts label{position:relative}
+.opts input{position:absolute;opacity:0;inset:0}
+.opts span{display:block;padding:4px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;cursor:pointer;white-space:nowrap}
+.opts input:checked+span{background:var(--teal);border-color:var(--teal);color:#fff}
+.opts input:focus-visible+span{outline:2px solid var(--teal);outline-offset:2px}
+aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+@media (max-width:880px){aside{position:static}}
+.total{display:flex;align-items:baseline;gap:8px}
+.total b{font-family:var(--display);font-size:52px;line-height:1;color:var(--navy);font-variant-numeric:tabular-nums}
+.total small{color:var(--muted)}
+.band{font-weight:600;border-radius:8px;padding:6px 10px;font-size:14px}
+.bars{display:flex;flex-direction:column;gap:7px;font-size:13px}
+.bar{display:grid;grid-template-columns:110px minmax(0,1fr) 34px;gap:8px;align-items:center}
+.track{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.fill{height:100%;border-radius:4px;background:var(--teal);transition:width .3s}
+.bar .n{font-variant-numeric:tabular-nums;text-align:left;color:var(--muted)}
+.weak h3{font-family:var(--display);font-size:15px;margin:0 0 6px;color:var(--navy)}
+.weak ol{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.weak li b{color:var(--ink)}
+.weak li em{font-style:normal;color:var(--teal);font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+button{font-family:var(--body);font-size:14px;border-radius:8px;padding:8px 14px;cursor:pointer;border:1px solid var(--teal)}
+.primary{background:var(--teal);color:#fff}
+.ghost{background:transparent;color:var(--teal)}
+button:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.note{font-size:12.5px;color:var(--muted);margin:0}
+#copied{font-size:13px;color:var(--good)}
+textarea#fallback{width:100%;min-height:120px;font-family:var(--body);font-size:13px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);padding:8px}
+.gate-h{font-family:var(--display);font-size:17px;margin:0;color:var(--navy)}
+#lead{display:flex;flex-direction:column;gap:6px}
+#lead label{font-size:13px;color:var(--muted)}
+#lead input{font-family:var(--body);font-size:15px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+#lead input:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+#lead button{margin-top:8px}
+#lead button:disabled{opacity:.5;cursor:not-allowed}
+.err{font-size:13px;color:var(--bad)}
+#gate,#result{display:flex;flex-direction:column;gap:14px}
+#gate[hidden],#result[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap" dir="rtl" lang="ar">
+  
+  <header>
+    <div class="brand">SBD CONSULTING · MAPS — DIAGNOSE</div>
+    <h1>شركتك واقفة فين؟ تقييم صحة الشركة في 8 محاور</h1>
+    <p class="lede">24 سؤال، 5 دقايق. جاوب بصراحة عن وضع شركتك النهارده مش اللي ناوي تعمله. في الآخر تكتب اسم شركتك وتعرف درجتك من 100 وأضعف 3 محاور محتاجين شغل الأول.</p>
+    <div class="scale"><span>لأ = 0</span><span>جزئياً = 1</span><span>أيوه = 2</span></div>
+  </header>
+  <main id="axes"></main>
+  <aside aria-live="polite">
+    <div id="gate">
+      <h3 class="gate-h">نتيجتك جاهزة بعد آخر سؤال</h3>
+      <div class="band" id="progress"></div>
+      <form id="lead" novalidate>
+        <label for="f-company">اسم الشركة *</label>
+        <input id="f-company" name="company" type="text" required autocomplete="organization">
+        <label for="f-contact">اسمك</label>
+        <input id="f-contact" name="contact" type="text" autocomplete="name">
+        <label for="f-phone">رقم الموبايل / واتساب</label>
+        <input id="f-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" dir="ltr">
+        <span id="err" class="err" hidden></span>
+        <button class="primary" id="send" type="submit">ابعت واعرض نتيجتي</button>
+      </form>
+      <p class="note">بياناتك بتوصل لفريق SBD Consulting بس، عشان نبعتلك قراءة مجانية لنتيجتك.</p>
+    </div>
+    <div id="result" hidden>
+      <div class="total"><b id="total">0</b><small>/ 100</small></div>
+      <div class="band" id="band"></div>
+      <div class="bars" id="bars"></div>
+      <div class="weak"><h3>أضعف 3 محاور — ابدأ بيهم</h3><ol id="weak"></ol></div>
+      <div class="actions">
+        <button class="primary" id="copy" type="button">انسخ نتيجتي</button>
+        <button class="ghost" id="reset" type="button">ابدأ من الأول</button>
+      </div>
+      <span id="copied" hidden>اتنسخت.</span>
+      <textarea id="fallback" hidden readonly aria-label="نص النتيجة"></textarea>
+      <p class="note">وصلتنا نتيجتك، وهنتواصل معاك بقراءة مجانية ليها. التقييم ده هو أداة الموديول الأول في كورس MAPS لأصحاب الشركات.</p>
+    </div>
+  </aside>
+</div>
+
+<script>
+const AXES=[
+ {k:"rev",t:"وضوح الإيراد",p:"Diagnose · موديول 1",
+  q:["عارف إيرادك الشهري لآخر 6 شهور بالرقم، مش بالتقريب.","عارف أكبر 3 مصادر دخل وكل واحد بيمثل كام في المية.","عارف هامش ربحك الحقيقي بعد كل المصاريف."],
+  fix:"اعمل خريطة إيراد: كل مصدر دخل، حجمه، وهامشه — قبل أي قرار نمو."},
+ {k:"icp",t:"العميل المثالي",p:"Diagnose · موديول 2",
+  q:["تقدر توصف عميلك الأكثر ربحية في جملتين.","فريقك كله بيقول نفس عرض القيمة لما يتسأل «ليه انتوا؟».","عارف أهم 3 منافسين وبتكسبهم في إيه وبتخسر في إيه."],
+  fix:"اكتب ICP وعرض قيمة في جملة واحدة، وجربهم على 5 عملاء حاليين."},
+ {k:"sales",t:"مكينة المبيعات",p:"Optimize · موديول 3",
+  q:["عندك مراحل بيع واضحة وكل ليد عارف هو في أنهي مرحلة.","كل ليد بيتابع في خلال 24 ساعة، ومفيش ليد بيقع من غير متابعة.","فيه CRM أو شيت واحد كل الفريق بيسجل عليه."],
+  fix:"ابني بايبلاين بمراحل ثابتة وقاعدة متابعة 24 ساعة، ودخّل عليه كل الليدز."},
+ {k:"leads",t:"توليد الليدز",p:"Optimize · موديول 4",
+  q:["عندك قناتين على الأقل بيجيبوا ليدز كل شهر بشكل منتظم.","عارف تكلفة العميل الواحد (CAC) من كل قناة.","جزء من عملائك الجداد بييجي من ترشيحات أو شراكات."],
+  fix:"اختار قناتين، حط لكل واحدة ميزانية ومستهدف شهري، واحسب CAC."},
+ {k:"team",t:"الفريق والهيكل",p:"Train · موديول 5",
+  q:["كل واحد في الفريق عنده دور مكتوب ومسؤول عن رقم.","عندك نظام عمولات أو حوافز مربوط بالنتايج.","الموظف الجديد بيبقى منتج خلال أول شهر بسبب Onboarding واضح."],
+  fix:"ارسم الهيكل اللي محتاجه بعد 12 شهر، واربط كل دور برقم وحافز."},
+ {k:"sop",t:"الإجراءات والتدريب",p:"Train · موديول 6",
+  q:["أهم 3 إجراءات في شركتك متوثقة ومحدش محتاج يسألك عليها.","فيه تدريب أسبوعي ثابت للفريق.","لو موظف أساسي مشي، الشغل بيكمل من غير ما يقف."],
+  fix:"وثّق أهم 3 إجراءات بـ SOP بسيط، وثبّت ساعة تدريب أسبوعية."},
+ {k:"kpi",t:"الأرقام والمتابعة",p:"Track · موديول 7",
+  q:["بتشوف داشبورد أسبوعي فيه أرقام المبيعات والتسويق.","فيه اجتماع أرقام ثابت مع الفريق كل أسبوع.","عارف وضع الكاش للـ 3 شهور الجاية."],
+  fix:"طلّع داشبورد أسبوعي بـ 5–7 أرقام، واعمل عليه اجتماع ثابت."},
+ {k:"owner",t:"استقلال الشركة عنك",p:"Track · موديول 8",
+  q:["لو غبت أسبوعين، المبيعات مش هتقع.","مش إنت اللي بتقفل أغلب الصفقات بنفسك.","عندك خطة مكتوبة لـ 90 يوم الجاية بأهداف وأولويات."],
+  fix:"اكتب خطة 90 يوم، وسلّم أول حاجتين من شغلك اليومي لحد في الفريق."}
+];
+const LBL=["لأ","جزئياً","أيوه"];
+// Example answers shown on first load (clearly marked as example in the banner)
+const SAMPLE={rev:[2,1,0],icp:[1,0,1],sales:[1,0,0],leads:[1,0,1],team:[1,0,0],sop:[0,0,0],kpi:[0,0,1],owner:[0,0,0]};
+const box=document.getElementById("axes");
+AXES.forEach(a=>{
+  const s=document.createElement("section");s.className="axis";
+  s.innerHTML=`<div class="axis-head"><div><div class="axis-phase">${a.p}</div><h2>${a.t}</h2></div><div class="axis-score" id="s-${a.k}"></div></div>`+
+  a.q.map((q,i)=>`<div class="q"><p>${q}</p><div class="opts" role="radiogroup" aria-label="${q}">`+
+    LBL.map((l,v)=>`<label><input type="radio" id="${a.k}${i}-${v}" name="${a.k}${i}" value="${v}"><span>${l}</span></label>`).join("")+`</div></div>`).join("");
+  box.appendChild(s);
+});
+function fill(src){AXES.forEach(a=>a.q.forEach((_,i)=>{const v=src?src[a.k][i]:null;
+  document.querySelectorAll(`input[name="${a.k}${i}"]`).forEach(r=>r.checked=(v!==null&&+r.value===v));}));}
+function read(){return AXES.map(a=>{let sum=0,ans=0;a.q.forEach((_,i)=>{const c=document.querySelector(`input[name="${a.k}${i}"]:checked`);if(c){sum+=+c.value;ans++;}});
+  return {a,score:Math.round(sum/6*100)/10,ans};});}
+function bandOf(t){if(t>=75)return["شركة جاهزة تكبر — ركّز على السرعة",'var(--good)'];if(t>=50)return["أساس موجود بس فيه فجوات بتوقف النمو",'var(--warn)'];return["الشركة لسه شغالة بيك إنت — محتاجة نظام",'var(--bad)'];}
+const FORM="https://docs.google.com/forms/d/e/1FAIpQLScUZe6HW3Uz-J-4nojTul0Z7-gEsZ6T3fQx06pJPuCBsHwOBg/formResponse";
+const E={company:"entry.128046174",contact:"entry.542177685",phone:"entry.1441337200",score:"entry.905173054",weakest:"entry.1090898295",details:"entry.2047594233"};
+let sent=false;
+function render(){
+  const r=read();const answered=r.reduce((x,y)=>x+y.ans,0);
+  const total=Math.round(r.reduce((x,y)=>x+y.score,0)/80*100);
+  document.getElementById("total").textContent=total;
+  const b=document.getElementById("band");const[t,c]=bandOf(total);b.textContent=t;b.style.background="var(--teal-soft)";b.style.color=c;
+  const pg=document.getElementById("progress");
+  pg.textContent=answered<24?`جاوبت ${answered} من 24 سؤال`:"خلّصت كل الأسئلة — اكتب بياناتك وشوف نتيجتك";
+  pg.style.background="var(--teal-soft)";pg.style.color="var(--ink)";
+  document.getElementById("send").disabled=answered<24;
+  r.forEach(x=>document.getElementById("s-"+x.a.k).textContent=(sent&&x.ans)?`${x.score} / 10`:"");
+  document.getElementById("bars").innerHTML=r.map(x=>`<div class="bar"><span>${x.a.t}</span><div class="track"><div class="fill" style="width:${x.score*10}%;background:${x.score<4?'var(--bad)':x.score<7?'var(--warn)':'var(--teal)'}"></div></div><span class="n">${x.score}</span></div>`).join("");
+  const weak=[...r].sort((p,q)=>p.score-q.score).slice(0,3);
+  document.getElementById("weak").innerHTML=weak.map(x=>`<li><b>${x.a.t} (${x.score}/10)</b> — ${x.a.fix} <em>${x.a.p}</em></li>`).join("");
+  return {total,r,weak,answered};
+}
+box.addEventListener("change",render);
+document.getElementById("lead").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const err=document.getElementById("err");const {total,r,weak,answered}=render();
+  const company=document.getElementById("f-company").value.trim();
+  if(answered<24){err.textContent="جاوب على كل الأسئلة الأول.";err.hidden=false;return;}
+  if(!company){err.textContent="اكتب اسم الشركة عشان نقدر نبعتلك النتيجة.";err.hidden=false;document.getElementById("f-company").focus();return;}
+  err.hidden=true;const btn=document.getElementById("send");btn.disabled=true;btn.textContent="جاري الإرسال...";
+  const body=new URLSearchParams();
+  body.append(E.company,company);
+  body.append(E.contact,document.getElementById("f-contact").value.trim());
+  body.append(E.phone,document.getElementById("f-phone").value.trim());
+  body.append(E.score,String(total));
+  body.append(E.weakest,weak.map(x=>x.a.t).join("، "));
+  body.append(E.details,r.map(x=>`${x.a.t}: ${x.score}/10`).join(" | "));
+  try{await fetch(FORM,{method:"POST",mode:"no-cors",body});}catch(_){}
+  sent=true;document.getElementById("gate").hidden=true;document.getElementById("result").hidden=false;render();
+  document.querySelector("aside").scrollIntoView({behavior:"smooth",block:"start"});
+});
+document.getElementById("reset").addEventListener("click",()=>{fill(null);sent=false;document.getElementById("gate").hidden=false;document.getElementById("result").hidden=true;
+  const btn=document.getElementById("send");btn.textContent="ابعت واعرض نتيجتي";document.getElementById("lead").reset();document.getElementById("copied").hidden=true;render();window.scrollTo({top:0});});
+document.getElementById("copy").addEventListener("click",()=>{
+  const {total,r,weak}=render();
+  const txt=`نتيجتي في تقييم صحة الشركة (MAPS — SBD Consulting): ${total}/100\n`+r.map(x=>`• ${x.a.t}: ${x.score}/10`).join("\n")+`\nأضعف محاور: ${weak.map(x=>x.a.t).join("، ")}`;
+  const ok=()=>{document.getElementById("copied").hidden=false;};
+  const fb=()=>{const t=document.getElementById("fallback");t.hidden=false;t.value=txt;t.select();ok();};
+  try{navigator.clipboard.writeText(txt).then(ok,fb);}catch(e){fb();}
+});
+fill(null);render();
+</script>
+</body>
+</html>
